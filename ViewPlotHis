@@ -1,0 +1,442 @@
+//import 'dart:html';
+import 'package:ejamitr_view_plot_history/viewdetails.dart';
+import 'package:flutter/animation.dart';
+import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
+
+class SelectLoc extends StatefulWidget {
+  @override
+  _SelectLocState createState() => _SelectLocState();
+}
+
+class _SelectLocState extends State<SelectLoc> {
+  TextEditingController khatianNo = TextEditingController();
+  String distLgdCode;
+  String subDivLgdCode;
+  String rcLgdCode;
+  String tehsilLgdCode;
+  String villLgdCode;
+
+  List distList = List();
+  List subDivList = List();
+  List rcList = List();
+  List tehsilList = List();
+  List villList = List();
+
+  void getDistrict() async {
+    try {
+      Response response = await Dio().get(
+          "http://164.100.127.15/lrservice_tripura/webresources/districts/v1/districts");
+      setState(() {
+        distList = response.data['districts']['district'];
+      });
+
+      // print(distList);
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  void getSubDiv(str) async {
+    try {
+      subDivList = [];
+      Response response = await Dio().get(
+          "http://164.100.127.15/lrservice_tripura/webresources/subdivisions/v1/subdivisions?lgd_district_code=" +
+              str);
+
+      print('We are in Sub');
+      setState(() {
+        if (response.data.toString().contains('[')) {
+          subDivList = response.data['subdivisions']['subdivision'];
+        } else {
+          subDivList.add(response.data['subdivisions']['subdivision']);
+        }
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  void getCircle(str) async {
+    try {
+      rcList = [];
+      Response response = await Dio().get(
+          "http://164.100.127.15/lrservice_tripura/webresources/circles/v1/circles?lgd_subdiv_code=" +
+              str);
+
+      print('We are in circle');
+      setState(() {
+        if (response.data.toString().contains('[')) {
+          rcList = response.data['circles']['circle'];
+        } else {
+          rcList.add(response.data['circles']['circle']);
+        }
+      });
+
+      print('XXXXXXXXXXXXXXX');
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  void getTehsil(str) async {
+    try {
+      tehsilList = [];
+      Response response = await Dio().get(
+          "http://164.100.127.15/lrservice_tripura/webresources/tehsils/v1/tehsils?lgd_circle_code=" +
+              str);
+
+      print('We are in tehsil');
+      setState(() {
+        if (response.data.toString().contains('[')) {
+          tehsilList = response.data['tehsils']['tehsil'];
+        } else {
+          tehsilList.add(response.data['tehsils']['tehsil']);
+        }
+      });
+
+      //print('XXXXXXXXXXXXXXX');
+
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  void getVillage(str) async {
+    try {
+      villList = [];
+      Response response = await Dio().get(
+          "http://164.100.127.15/lrservice_tripura/webresources/villages/v1/villages?lgd_tehsil_code=" +
+              str);
+
+      print('We are in Villages');
+      setState(() {
+        if (response.data.toString().contains('[')) {
+          villList = response.data['villages']['village'];
+        } else {
+          villList.add(response.data['villages']['village']);
+        }
+      });
+
+      //print('XXXXXXXXXXXXXXX');
+
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    this.getDistrict();
+    // this.getSubDiv('');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    //getDistrict();
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('View Plot History'),
+      ),
+      body: Container(
+        width: double.infinity,
+        //alignment: Alignment.center,
+        padding: EdgeInsets.all(5.0),
+        child: new SingleChildScrollView(
+          child: Column(
+            // crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Card(
+                color:Colors.white30,
+                child: Container(
+                  height: 60,
+                  child: Row(
+                    //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      SizedBox(
+                        width: 20.0,
+                      ),
+                      Text('District', style: TextStyle(
+                        fontSize: 13.0,
+                       // color: Colors.white,
+                      ),),
+                      SizedBox(
+                        width: 85.0,
+                      ),
+                      DropdownButton(
+                        icon: Icon(
+                          Icons.arrow_drop_down_sharp,
+                          color: Colors.blue,
+                        ),
+                        items: distList.map((e) {
+                          return new DropdownMenuItem(
+                              child: new Text(
+                                e['district_name_eng'],
+                                style: TextStyle(
+                                  fontSize: 13.0,
+                                 // color: Colors.blue,
+                                ),
+                              ),
+                              value: e['lgd_district_code'].toString());
+                        }).toList(),
+                        onChanged: (String newVal) {
+                          setState(() {
+                            distLgdCode = newVal;
+                            villLgdCode = null;
+                            villList = [];
+                            tehsilLgdCode = null;
+                            tehsilList = [];
+                            rcLgdCode = null;
+                            rcList = [];
+                            subDivLgdCode = null;
+                            getSubDiv(distLgdCode);
+                          });
+                        },
+                        value: distLgdCode,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Card(
+                color: Colors.white30,
+                child: Container(
+                  height: 60,
+                  child: Row(
+                    // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      SizedBox(
+                        width: 20.0,
+                      ),
+                      Text('Sub-division'),
+                      SizedBox(
+                        width: 54.0,
+                      ),
+                      DropdownButton(
+                        icon: Icon(
+                          Icons.arrow_drop_down_sharp,
+                          color: Colors.blue,
+                        ),
+                        items: subDivList.map((e) {
+                          return new DropdownMenuItem(
+                              child: new Text(
+                                e['subdiv_name_eng'],
+                                style: TextStyle(
+                                  fontSize: 13.0,
+                                ),
+                              ),
+                              value: e['lgd_subdiv_code'].toString());
+                        }).toList(),
+                        onChanged: (String newVal) {
+                          setState(() {
+                            subDivLgdCode = newVal;
+                            villLgdCode = null;
+                            villList = [];
+                            tehsilLgdCode = null;
+                            tehsilList = [];
+                            rcLgdCode = null;
+                            getCircle(subDivLgdCode);
+                            // getSubDiv();
+                          });
+                        },
+                        //),
+                        value: subDivLgdCode,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Card(
+                color: Colors.white30,
+                child: Container(
+                  height: 60,
+                  child: Row(
+                    // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SizedBox(
+                        width: 20.0,
+                      ),
+                      Text('Revenue Circle'),
+                      SizedBox(
+                        width: 38.0,
+                      ),
+                      DropdownButton(
+                        icon: Icon(
+                          Icons.arrow_drop_down_sharp,
+                          color: Colors.blue,
+                        ),
+                        items: rcList.map((e) {
+                          return new DropdownMenuItem(
+                              child: new Text(
+                                e['circle_name_eng'],
+                                style: TextStyle(
+                                  fontSize: 13.0,
+                                ),
+                              ),
+                              value: e['lgd_circle_code'].toString());
+                        }).toList(),
+                        onChanged: (String newVal) {
+                          setState(() {
+                            rcLgdCode = newVal;
+                            villLgdCode = null;
+                            villList = [];
+                            tehsilLgdCode = null;
+                            getTehsil(rcLgdCode);
+                            // print(subDivLgdCode.toString());
+                            // getSubDiv();
+                          });
+                        },
+                        //),
+                        value: rcLgdCode,
+                      ),
+                    ],
+                  ),
+                ),
+              ), //Circle
+
+              Card(
+                color: Colors.white30,
+                child: Container(
+                  height: 60,
+                  child: Row(
+                    // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      SizedBox(
+                        width: 20.0,
+                      ),
+                      Text('Tehsil'),
+                      SizedBox(
+                        width: 93.0,
+                      ),
+                      DropdownButton(
+                        icon: Icon(
+                          Icons.arrow_drop_down_sharp,
+                          color: Colors.blue,
+                        ),
+                        items: tehsilList.map((e) {
+                          return new DropdownMenuItem(
+                              child: new Text(
+                                e['tehsil_name_eng'],
+                                style: TextStyle(
+                                  fontSize: 13.0,
+                                ),
+                              ),
+                              value: e['lgd_tehsil_code'].toString());
+                        }).toList(),
+                        onChanged: (String newVal) {
+                          setState(() {
+                            tehsilLgdCode = newVal;
+                            villLgdCode = null;
+                            getVillage(tehsilLgdCode);
+                          });
+                        },
+                        //),
+                        value: tehsilLgdCode,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              Card(
+                color: Colors.white30,
+                child: Container(
+                  height: 60,
+                  child: Row(
+                    // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      SizedBox(
+                        width: 20.0,
+                      ),
+                      Text('Mouja'),
+                      SizedBox(
+                        width: 30.0,
+                      ),
+                      DropdownButton(
+                        icon: Icon(
+                          Icons.arrow_drop_down_sharp,
+                          color: Colors.blue,
+                        ),
+                        items: villList.map((e) {
+                          return new DropdownMenuItem(
+                              child: new Text(
+                                e['village_name_eng'],
+                                style: TextStyle(
+                                  fontSize: 13.0,
+                                ),
+                              ),
+                              value: e['lgd_village_code'].toString());
+                        }).toList(),
+                        onChanged: (String newVal) {
+                          setState(() {
+                            villLgdCode = newVal;
+                          });
+                        },
+                        //),
+                        value: villLgdCode,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              Card(
+                color: Colors.white30,
+                child: Container(
+                  padding: EdgeInsets.fromLTRB(20, 5, 5, 5),
+                  child: TextField(
+                    // autofocus: false,
+                    // keyboardType: TextInputType.number,
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.allow(RegExp(r'[1-9]{1}[0-9]*\/?[0-9]*')),
+                    ],
+                    decoration: InputDecoration(
+                        border: InputBorder.none,
+                        labelText: 'Plot Number',
+                        hintText: 'Type here'),
+                    style: TextStyle(fontSize: 13.0),
+                    controller: khatianNo,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                  onPressed: () {
+                    if (khatianNo.text == null || khatianNo.text == ''||villLgdCode==null||villLgdCode=='')
+                      return showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              //title: Text(''),
+                              content: Text('Please Enter Plot Number/Revenue Village'),
+                              actions: [
+                                new FlatButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: new Text('Ok'))
+                              ],
+                            );
+                          });
+                    else
+                      //print(khatianNo.text);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ViewLandDetails(
+                                khatianNo.text.toString(), villLgdCode)),
+                      );
+                    // Future.delayed(Duration(microseconds: 500), () {
+                    // khatianNo.clear();
+                    // });
+                  },
+                  child: Text('View Plot History')),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
